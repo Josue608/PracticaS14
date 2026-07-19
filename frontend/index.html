@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practica 6 | CRUD + JWT + OAuth</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d9dee8;
+      --primary: #2457c5;
+      --primary-dark: #1c459d;
+      --success: #12715b;
+      --danger: #b42318;
+      --warning: #936200;
+      --soft-blue: #eaf1ff;
+      --soft-green: #e9f7f2;
+      --shadow: 0 18px 45px rgba(16, 24, 40, 0.10);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(120deg, rgba(36, 87, 197, 0.08), transparent 35%),
+        linear-gradient(300deg, rgba(18, 113, 91, 0.08), transparent 36%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 16px;
+      color: #ffffff;
+      background: var(--primary);
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 10px 20px rgba(36, 87, 197, 0.20);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .button-secondary {
+      color: var(--ink);
+      background: #eef2f7;
+    }
+
+    .button-secondary:hover {
+      color: var(--ink);
+      background: #e0e7f1;
+      box-shadow: none;
+    }
+
+    .button-danger {
+      background: var(--danger);
+    }
+
+    .button-danger:hover {
+      background: #8f1d15;
+      box-shadow: 0 10px 20px rgba(180, 35, 24, 0.18);
+    }
+
+    .button-google {
+      background: #ffffff;
+      color: #202124;
+      border: 1px solid var(--line);
+    }
+
+    .button-google:hover {
+      background: #f7f8fa;
+      box-shadow: 0 10px 20px rgba(16, 24, 40, 0.08);
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 11px;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(36, 87, 197, 0.12);
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: #344054;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      border-radius: 8px;
+      background: #102a56;
+      color: #ffffff;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--warning);
+    }
+
+    .status-pill.is-online .status-dot {
+      background: var(--success);
+    }
+
+    .status-pill.is-error .status-dot {
+      background: var(--danger);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(300px, 390px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid rgba(217, 222, 232, 0.86);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .panel-header p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      margin-bottom: 18px;
+    }
+
+    .tab-button {
+      min-height: 36px;
+      color: var(--muted);
+      background: transparent;
+      box-shadow: none;
+      border-radius: 7px;
+    }
+
+    .tab-button:hover {
+      color: var(--ink);
+      background: #eef2f7;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .tab-button.is-active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 6px 14px rgba(16, 24, 40, 0.08);
+    }
+
+    .auth-form {
+      display: none;
+      gap: 13px;
+    }
+
+    .auth-form.is-active {
+      display: grid;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .form-grid .span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .session-card {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft-blue);
+    }
+
+    .session-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 900;
+    }
+
+    .token-box {
+      min-height: 42px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #c7d7fb;
+      color: #344054;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.78rem;
+      overflow-wrap: anywhere;
+    }
+
+    .crud-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 18px;
+    }
+
+    .workspace-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 0 0;
+    }
+
+    .workspace-header h2 {
+      margin: 0;
+      font-size: 1.22rem;
+      letter-spacing: 0;
+    }
+
+    .workspace-header p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .subpanel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .subpanel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .subpanel-header h3 {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .subpanel-header span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .subpanel-body {
+      padding: 14px;
+    }
+
+    .table-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475467;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--soft-green);
+      color: var(--success);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .empty-state {
+      padding: 26px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+    }
+
+    .result-box {
+      min-height: 120px;
+      max-height: 260px;
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #111827;
+      color: #d1fae5;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      width: min(420px, calc(100% - 36px));
+      padding: 14px 16px;
+      border-radius: 8px;
+      background: #101828;
+      color: #ffffff;
+      box-shadow: 0 18px 45px rgba(16, 24, 40, 0.24);
+      transform: translateY(140%);
+      transition: transform 180ms ease;
+    }
+
+    .toast.is-visible {
+      transform: translateY(0);
+    }
+
+    .toast.is-error {
+      background: var(--danger);
+    }
+
+    .toast.is-success {
+      background: var(--success);
+    }
+
+    @media (max-width: 920px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      .topbar,
+      .panel-header,
+      .subpanel-header,
+      .workspace-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .form-grid,
+      .table-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .status-pill {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">P6</div>
+        <div>
+          <h1>Practica 6</h1>
+          <p>CRUD de usuarios con JWT, MongoDB y acceso con Google OAuth.</p>
+        </div>
+      </div>
+      <div class="status-pill" id="apiStatus">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Verificando API</span>
+      </div>
+    </header>
+
+    <section class="dashboard-grid" aria-label="Panel de administracion">
+      <aside class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Acceso seguro</h2>
+            <p>Registra una cuenta o inicia sesion para habilitar el CRUD.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="auth-tabs" role="tablist" aria-label="Autenticacion">
+            <button class="tab-button is-active" type="button" data-tab-target="loginForm">Login</button>
+            <button class="tab-button" type="button" data-tab-target="registerForm">Registro</button>
+          </div>
+
+          <form class="auth-form is-active" id="loginForm">
+            <label>
+              Email
+              <input id="loginEmail" autocomplete="email" placeholder="correo@ejemplo.com" type="email" required />
+            </label>
+            <label>
+              Password
+              <input id="loginPassword" autocomplete="current-password" placeholder="Tu password" type="password" required />
+            </label>
+            <div class="action-row">
+              <button type="submit">Iniciar sesion</button>
+              <button class="button-google" id="googleLoginButton" type="button">Google</button>
+            </div>
+          </form>
+
+          <form class="auth-form" id="registerForm">
+            <label>
+              Nombre
+              <input id="regNombre" autocomplete="name" placeholder="Nombre completo" required />
+            </label>
+            <label>
+              Email
+              <input id="regEmail" autocomplete="email" placeholder="correo@ejemplo.com" type="email" required />
+            </label>
+            <label>
+              Password
+              <input id="regPassword" autocomplete="new-password" minlength="6" placeholder="Minimo 6 caracteres" type="password" required />
+            </label>
+            <button type="submit">Crear cuenta</button>
+          </form>
+
+          <div class="session-card">
+            <div class="session-title">
+              <span id="sessionLabel">Sesion no iniciada</span>
+              <button class="button-secondary" id="logoutButton" type="button">Salir</button>
+            </div>
+            <div class="token-box" id="tokenBox">Sin token guardado</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-header">
+          <div>
+            <h2>Administracion de usuarios</h2>
+            <p>Crea, consulta, actualiza y elimina registros protegidos por JWT.</p>
+          </div>
+          <button class="button-secondary" id="refreshUsersButton" type="button">Actualizar lista</button>
+        </div>
+        <div class="crud-grid">
+          <div class="subpanel">
+            <div class="subpanel-header">
+              <h3>Crear usuario</h3>
+              <span>Campos requeridos</span>
+            </div>
+            <div class="subpanel-body">
+              <form class="form-grid" id="createUserForm">
+                <label>
+                  Nombre
+                  <input id="crearNombre" placeholder="Nombre completo" required />
+                </label>
+                <label>
+                  Email
+                  <input id="crearEmail" placeholder="correo@ejemplo.com" type="email" required />
+                </label>
+                <label>
+                  Password
+                  <input id="crearPassword" minlength="6" placeholder="Password inicial" type="password" required />
+                </label>
+                <label>
+                  Rol
+                  <select id="crearRol">
+                    <option value="usuario">Usuario</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </label>
+                <div class="action-row span-2">
+                  <button type="submit">Crear usuario</button>
+                  <button class="button-secondary" type="reset">Limpiar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="subpanel">
+            <div class="subpanel-header">
+              <h3>Editar usuario</h3>
+              <span>Selecciona una fila o pega el ID</span>
+            </div>
+            <div class="subpanel-body">
+              <form class="form-grid" id="editUserForm">
+                <label class="span-2">
+                  ID
+                  <input id="editarId" placeholder="ID del usuario" required />
+                </label>
+                <label>
+                  Nombre
+                  <input id="editarNombre" placeholder="Nuevo nombre" />
+                </label>
+                <label>
+                  Email
+                  <input id="editarEmail" placeholder="Nuevo email" type="email" />
+                </label>
+                <label>
+                  Rol
+                  <select id="editarRol">
+                    <option value="">No cambiar</option>
+                    <option value="usuario">Usuario</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </label>
+                <div class="action-row">
+                  <button type="submit">Guardar cambios</button>
+                  <button class="button-danger" id="deleteUserButton" type="button">Eliminar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="subpanel">
+            <div class="subpanel-header">
+              <h3>Usuarios registrados</h3>
+              <span id="userCount">0 registros</span>
+            </div>
+            <div class="subpanel-body">
+              <div class="table-toolbar">
+                <input id="filtroNombre" placeholder="Filtrar por nombre" />
+                <input id="filtroEmail" placeholder="Filtrar por email" type="email" />
+                <button id="filterUsersButton" type="button">Buscar</button>
+              </div>
+              <div id="usersContainer" class="empty-state">Inicia sesion y carga la lista de usuarios.</div>
+            </div>
+          </div>
+
+          <div class="subpanel">
+            <div class="subpanel-header">
+              <h3>Respuesta de la API</h3>
+              <span>Ultima accion</span>
+            </div>
+            <div class="subpanel-body">
+              <pre class="result-box" id="resultado">{ "estado": "Listo" }</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

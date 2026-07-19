@@ -1,0 +1,3 @@
+El puerto 4000 ya esta en uso. Cierra la otra terminal del servidor o ejecuta:
+Get-NetTCPConnection -LocalPort 4000 | Select-Object OwningProcess
+Stop-Process -Id <PID> -Force
