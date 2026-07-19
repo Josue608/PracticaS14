@@ -3,6 +3,10 @@ const API_URL =
     ? "http://localhost:4000/api"
     : "https://practicas14.onrender.com/api";
 
+const state = {
+  token: localStorage.getItem("token") || "",
+  usuarios: [],
+};
 const $ = (id) => document.getElementById(id);
 
 const elements = {
