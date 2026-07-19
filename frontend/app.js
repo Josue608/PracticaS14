@@ -1,11 +1,7 @@
 const API_URL =
-  window.API_URL ||
-  (window.location.port === "4000" ? "/api" : "http://localhost:4000/api");
-
-const state = {
-  token: localStorage.getItem("token") || "",
-  usuarios: [],
-};
+  window.location.hostname === "localhost"
+    ? "http://localhost:4000/api"
+    : "https://practicas14.onrender.com/api";
 
 const $ = (id) => document.getElementById(id);
 
